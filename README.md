@@ -132,18 +132,10 @@ Before every mutation, a JSON snapshot of the state is pushed onto an **undo sta
 6. **Generate Code** → choose Java / C++ / Python → copy or download.
 7. **Code → Diagram** → paste source code → get a class diagram instantly.
 8. **Export** PNG for assignments, PDF for reports, JSON to continue later.
+---
 
-## 6. Deploying Your Own Copy
-
-1. Fork or clone this repo (`DiagramLab-IEM`).
-2. Ensure `index.html` is at the repo root.
-3. Repo **Settings → Pages → Deploy from branch → main → / (root)**.
-4. Your tool is live at `https://<username>.github.io/DiagramLab-IEM/`.
-
-## 7. License
+## 6. License
 
 Released under the **MIT License** — free to use, modify and share. See [LICENSE](LICENSE).
 
 ---
-
-*Made for the Software Engineering subject. Made with ❤️ by Rajdeep Das (Dept. of CSE-AIML, IEM-UEM Kolkata) for the students of the Institute of Engineering and Management, Kolkata.*
