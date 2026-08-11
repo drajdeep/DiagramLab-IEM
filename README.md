@@ -2,7 +2,7 @@
 
 **A free, browser-based UML & DFD diagramming studio with rule-based code generation — built for Software Engineering students.**
 
-🔗 **Live tool:** enable GitHub Pages on this repo and open the URL — the entire application is one `index.html` file.
+🔗 **Live tool:** `[index.html](https://drajdeep.github.io/DiagramLab-IEM/)`
 
 Made with ❤️ by **Rajdeep Das** (Dept. of CSE-AIML, IEM-UEM Kolkata) for the students of the **Institute of Engineering and Management, Kolkata**.
 
