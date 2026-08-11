@@ -159,6 +159,13 @@ svg#canvas{display:block; background:
 
 <div id="app">
   <aside id="sidebar">
+    <div id="dfdNotationWrap" style="display:none; padding:10px 12px 0;">
+      <div class="side-title" style="padding:0 0 4px;">DFD Notation</div>
+      <select id="dfdNotation" class="tb-sel" style="width:100%;">
+        <option value="yourdon">Yourdon / DeMarco</option>
+        <option value="gane">Gane &amp; Sarson</option>
+      </select>
+    </div>
     <div class="side-title">Elements — drag or click to place</div>
     <div class="palette" id="palNodes"></div>
     <div class="side-title">Connectors — click, then source → target</div>
@@ -229,7 +236,7 @@ const $=id=>document.getElementById(id);
 const SVGNS="http://www.w3.org/2000/svg";
 const uid=()=> "e"+Math.random().toString(36).slice(2,9);
 
-let state={ diagramType:"class", nodes:[], edges:[], seq:{} };
+let state={ diagramType:"class", dfdNotation:"yourdon", nodes:[], edges:[], seq:{} };
 let sel=null;            // {kind:'node'|'edge', id}
 let pending=null;        // {kind:'node'|'edge', type} from palette
 let connectSrc=null;     // node id while connecting
@@ -252,7 +259,7 @@ const DIAGRAMS={
   dfd:{name:"Data Flow Diagram (DFD)",
     nodes:[["process","Process"],["datastore","Data Store"],["external","External Entity"],["note","Note"]],
     edges:[["dataflow","Data Flow"]],
-    hint:"Yourdon/DeMarco notation: circles = processes, open rectangles = data stores, rectangles = external entities. Label every data flow."},
+    hint:"Yourdon/DeMarco: circle processes, data stores as two parallel lines. Gane & Sarson: rounded-corner processes with ID band, open-ended data stores. Pick the notation above — label every data flow."},
   sequence:{name:"Sequence Diagram",
     nodes:[["lifeline","Object Lifeline"],["actorline","Actor Lifeline"],["activation","Activation Bar"],["note","Note"]],
     edges:[["syncmsg","Synchronous Message"],["asyncmsg","Asynchronous Message"],["retmsg","Return Message"]],
@@ -282,8 +289,12 @@ function palIcon(t){
     case"actor":case"actorline":return s+`<circle cx="17" cy="5" r="3" ${k}/><line x1="17" y1="8" x2="17" y2="15" ${k}/><line x1="11" y1="11" x2="23" y2="11" ${k}/><line x1="17" y1="15" x2="12" y2="21" ${k}/><line x1="17" y1="15" x2="22" y2="21" ${k}/></svg>`;
     case"ucase":return s+`<ellipse cx="17" cy="12" rx="13" ry="8" ${k}/></svg>`;
     case"boundary":case"pkg":return s+`<rect x="3" y="5" width="28" height="16" ${k}/><rect x="3" y="2" width="12" height="4" ${k}/></svg>`;
-    case"process":return s+`<circle cx="17" cy="12" r="9" ${k}/></svg>`;
-    case"datastore":return s+`<line x1="5" y1="6" x2="31" y2="6" ${k}/><line x1="5" y1="18" x2="31" y2="18" ${k}/><line x1="5" y1="6" x2="5" y2="18" ${k}/></svg>`;
+    case"process":return state.dfdNotation==="gane"
+      ? s+`<rect x="5" y="3" width="24" height="18" rx="5" ${k}/><line x1="5" y1="9" x2="29" y2="9" ${k}/></svg>`
+      : s+`<circle cx="17" cy="12" r="9" ${k}/></svg>`;
+    case"datastore":return state.dfdNotation==="gane"
+      ? s+`<line x1="4" y1="6" x2="31" y2="6" ${k}/><line x1="4" y1="18" x2="31" y2="18" ${k}/><line x1="4" y1="6" x2="4" y2="18" ${k}/><line x1="11" y1="6" x2="11" y2="18" ${k}/></svg>`
+      : s+`<line x1="4" y1="7" x2="31" y2="7" ${k}/><line x1="4" y1="17" x2="31" y2="17" ${k}/></svg>`;
     case"external":return s+`<rect x="5" y="4" width="24" height="16" ${k}/></svg>`;
     case"lifeline":return s+`<rect x="8" y="2" width="18" height="8" ${k}/><line x1="17" y1="10" x2="17" y2="23" ${k} stroke-dasharray="3,2"/></svg>`;
     case"activation":return s+`<line x1="17" y1="2" x2="17" y2="22" ${k} stroke-dasharray="3,2"/><rect x="13" y="6" width="8" height="13" ${k} fill="#e8f0fa"/></svg>`;
@@ -347,7 +358,7 @@ const esc=s=>String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>
 function center(n){return {x:n.x+n.w/2, y:n.y+n.h/2};}
 function anchor(n,tx,ty){          // point on node border toward (tx,ty)
   const c=center(n), dx=tx-c.x, dy=ty-c.y;
-  if(n.type==="process"){ const r=Math.min(n.w,n.h)/2, d=Math.hypot(dx,dy)||1;
+  if(n.type==="process"&&state.dfdNotation!=="gane"){ const r=Math.min(n.w,n.h)/2, d=Math.hypot(dx,dy)||1;
     return {x:c.x+dx/d*r, y:c.y+dy/d*r}; }
   if(n.type==="ucase"){ const rx=n.w/2, ry=n.h/2, d=Math.hypot(dx/rx,dy/ry)||1;
     return {x:c.x+dx/d, y:c.y+dy/d}; }
@@ -425,16 +436,40 @@ function renderNode(n){
     else g+=`<text x="${n.x+8}" y="${n.y+18}" font-size="13" font-weight="bold" font-family="Segoe UI" fill="#111418">${esc(n.label)}</text>`;
   }
   else if(T==="process"){
-    const r=Math.min(n.w,n.h)/2;
-    g+=`<circle cx="${c.x}" cy="${c.y}" r="${r}" ${st}/>`;
-    g+=multiline(n.label,c.x,c.y - (String(n.label).split("\n").length-1)*7 +4,15,'text-anchor="middle"');
+    if(state.dfdNotation==="gane"){
+      const lines=String(n.label).split("\n");
+      const idTxt=lines.length>1?lines[0]:""; const nameTxt=lines.length>1?lines.slice(1).join(" "):lines[0];
+      const bandH=idTxt?22:0;
+      g+=`<rect x="${n.x}" y="${n.y}" width="${n.w}" height="${n.h}" rx="14" ${st}/>`;
+      if(idTxt){
+        g+=`<line x1="${n.x}" y1="${n.y+bandH}" x2="${n.x+n.w}" y2="${n.y+bandH}" stroke="#111418" stroke-width="1.3"/>`;
+        g+=`<text x="${c.x}" y="${n.y+15}" text-anchor="middle" font-size="12" font-weight="bold" font-family="Segoe UI" fill="#111418">${esc(idTxt)}</text>`;
+      }
+      g+=`<text x="${c.x}" y="${n.y+bandH+(n.h-bandH)/2+4}" text-anchor="middle" font-size="12.5" font-family="Segoe UI" fill="#111418">${esc(nameTxt)}</text>`;
+    }else{
+      const r=Math.min(n.w,n.h)/2;
+      g+=`<circle cx="${c.x}" cy="${c.y}" r="${r}" ${st}/>`;
+      g+=multiline(n.label,c.x,c.y - (String(n.label).split("\n").length-1)*7 +4,15,'text-anchor="middle"');
+    }
   }
   else if(T==="datastore"){
-    g+=`<line x1="${n.x}" y1="${n.y}" x2="${n.x+n.w}" y2="${n.y}" stroke="${selCls?'#1a56a0':'#111418'}" stroke-width="1.6"/>`;
-    g+=`<line x1="${n.x}" y1="${n.y+n.h}" x2="${n.x+n.w}" y2="${n.y+n.h}" stroke="${selCls?'#1a56a0':'#111418'}" stroke-width="1.6"/>`;
-    g+=`<line x1="${n.x}" y1="${n.y}" x2="${n.x}" y2="${n.y+n.h}" stroke="${selCls?'#1a56a0':'#111418'}" stroke-width="1.6"/>`;
+    const sc=selCls?'#1a56a0':'#111418';
+    const parts=String(n.label).split("|");
+    const idTxt=parts.length>1?parts[0].trim():""; const nameTxt=parts.length>1?parts.slice(1).join("|").trim():String(n.label);
     g+=`<rect x="${n.x}" y="${n.y}" width="${n.w}" height="${n.h}" fill="#fff" fill-opacity="0.01"/>`;
-    g+=`<text x="${n.x+10}" y="${c.y+4}" font-size="12.5" font-family="Segoe UI" fill="#111418">${esc(n.label)}</text>`;
+    g+=`<line x1="${n.x}" y1="${n.y}" x2="${n.x+n.w}" y2="${n.y}" stroke="${sc}" stroke-width="1.6"/>`;
+    g+=`<line x1="${n.x}" y1="${n.y+n.h}" x2="${n.x+n.w}" y2="${n.y+n.h}" stroke="${sc}" stroke-width="1.6"/>`;
+    if(state.dfdNotation==="gane"){
+      g+=`<line x1="${n.x}" y1="${n.y}" x2="${n.x}" y2="${n.y+n.h}" stroke="${sc}" stroke-width="1.6"/>`;
+      const cellW=idTxt?44:0;
+      if(idTxt){
+        g+=`<line x1="${n.x+cellW}" y1="${n.y}" x2="${n.x+cellW}" y2="${n.y+n.h}" stroke="${sc}" stroke-width="1.3"/>`;
+        g+=`<text x="${n.x+cellW/2}" y="${c.y+4}" text-anchor="middle" font-size="12" font-weight="bold" font-family="Segoe UI" fill="#111418">${esc(idTxt)}</text>`;
+      }
+      g+=`<text x="${n.x+cellW+10}" y="${c.y+4}" font-size="12.5" font-family="Segoe UI" fill="#111418">${esc(nameTxt)}</text>`;
+    }else{
+      g+=`<text x="${c.x}" y="${c.y+4}" text-anchor="middle" font-size="12.5" font-family="Segoe UI" fill="#111418">${esc(idTxt?idTxt+"  "+nameTxt:nameTxt)}</text>`;
+    }
   }
   else if(T==="external"){
     g+=`<rect x="${n.x}" y="${n.y}" width="${n.w}" height="${n.h}" ${st}/>`;
@@ -543,6 +578,8 @@ function toast(msg,ms){ const el=$("status"); el.textContent=msg; el.style.displ
 
 function buildPalette(){
   const d=DIAGRAMS[state.diagramType];
+  $("dfdNotationWrap").style.display = state.diagramType==="dfd" ? "block" : "none";
+  if($("dfdNotation")) $("dfdNotation").value=state.dfdNotation||"yourdon";
   $("palNodes").innerHTML=d.nodes.map(([t,l])=>
     `<div class="pal-item" draggable="true" data-kind="node" data-type="${t}">${palIcon(t)}<span>${l}</span></div>`).join("");
   $("palEdges").innerHTML=d.edges.map(([t,l])=>
@@ -726,6 +763,12 @@ function showProps(){
   }
 }
 
+/* notation selector */
+$("dfdNotation").addEventListener("change",()=>{
+  state.dfdNotation=$("dfdNotation").value;
+  buildPalette(); render();
+});
+
 /* ---------- toolbar ---------- */
 const sel_=$("diagType");
 sel_.innerHTML=Object.entries(DIAGRAMS).map(([k,v])=>`<option value="${k}">${v.name}</option>`).join("");
@@ -744,7 +787,7 @@ $("btnZoomOut").addEventListener("click",()=>{zoom=Math.max(0.4,zoom-0.1); $("zo
 
 /* save / load */
 $("btnSave").addEventListener("click",()=>{
-  const blob=new Blob([JSON.stringify({app:"DiagramLab",version:1,diagramType:state.diagramType,nodes:state.nodes,edges:state.edges},null,2)],{type:"application/json"});
+  const blob=new Blob([JSON.stringify({app:"DiagramLab",version:1,diagramType:state.diagramType,dfdNotation:state.dfdNotation,nodes:state.nodes,edges:state.edges},null,2)],{type:"application/json"});
   dl(blob, "diagram-"+state.diagramType+".json");
 });
 $("btnLoad").addEventListener("click",()=>$("fileLoad").click());
@@ -756,6 +799,7 @@ $("fileLoad").addEventListener("change",ev=>{
       if(!d.nodes||!d.edges) throw 0;
       pushUndo();
       state.diagramType=d.diagramType||"class"; sel_.value=state.diagramType;
+      state.dfdNotation=d.dfdNotation||"yourdon";
       state.nodes=d.nodes; state.edges=d.edges; sel=null;
       buildPalette(); render(); showProps(); toast("Diagram loaded.");
     }catch(_){ alert("This file is not a valid DiagramLab JSON file."); } };
@@ -1283,6 +1327,11 @@ function contentBounds(){
   state.edges.filter(e=>e.y).forEach(e=>{y2=Math.max(y2,e.y+40);});
   return {x:Math.max(0,x1),y:Math.max(0,y1),w:x2-x1,h:y2-y1};
 }
+const EXPORT_LINES=[
+  {t:"Department of CSE-AIML & CSBS,", size:16, bold:true, color:"#123c72"},
+  {t:"Software Engineering | PCCCS594", size:14, bold:true, color:"#111418"},
+  {t:"Course Coordinators: Mr. Rajdeep Das, Prof. Bibekananda Kundu, Prof. Pabak Indu, Dr. Indrajit De", size:12, bold:false, color:"#111418"}
+];
 function renderToCanvas(cb){
   const b=contentBounds(); const oldSel=sel, oldZoom=zoom;
   sel=null; zoom=1; render();
@@ -1291,12 +1340,41 @@ function renderToCanvas(cb){
   const svgStr=`<svg xmlns="http://www.w3.org/2000/svg" width="${b.w}" height="${b.h}" viewBox="${b.x} ${b.y} ${b.w} ${b.h}"><rect x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" fill="#ffffff"/>${inner}</svg>`;
   const img=new Image();
   img.onload=()=>{
-    const scale=2, cnv=document.createElement("canvas");
-    cnv.width=b.w*scale; cnv.height=b.h*scale;
-    const ctx=cnv.getContext("2d");
-    ctx.fillStyle="#fff"; ctx.fillRect(0,0,cnv.width,cnv.height);
-    ctx.scale(scale,scale); ctx.drawImage(img,0,0);
-    cb(cnv,b);
+    const banner=new Image();
+    const compose=(hasBanner)=>{
+      const scale=2;
+      const W=Math.max(b.w, 660);
+      const bw=Math.min(600, W-20);
+      const bh=hasBanner?Math.round(bw*(banner.naturalHeight/(banner.naturalWidth||1100))):0;
+      const lineH=[24,20,18], padTop=10;
+      let headH=padTop+(hasBanner?bh+10:0);
+      EXPORT_LINES.forEach((_,i)=>headH+=lineH[i]);
+      headH+=12; // gap + separator
+      const cnv=document.createElement("canvas");
+      cnv.width=W*scale; cnv.height=(headH+b.h+14)*scale;
+      const ctx=cnv.getContext("2d");
+      ctx.fillStyle="#fff"; ctx.fillRect(0,0,cnv.width,cnv.height);
+      ctx.scale(scale,scale);
+      let y=padTop;
+      if(hasBanner){ ctx.drawImage(banner,(W-bw)/2,y,bw,bh); y+=bh+10; }
+      ctx.textAlign="center";
+      EXPORT_LINES.forEach((ln,i)=>{
+        let fs=ln.size;
+        ctx.font=(ln.bold?"bold ":"")+fs+"px Segoe UI, Arial";
+        while(ctx.measureText(ln.t).width>W-24 && fs>9){ fs--; ctx.font=(ln.bold?"bold ":"")+fs+"px Segoe UI, Arial"; }
+        ctx.fillStyle=ln.color;
+        y+=lineH[i]; ctx.fillText(ln.t,W/2,y-5);
+      });
+      y+=6;
+      ctx.strokeStyle="#1a56a0"; ctx.lineWidth=1.4;
+      ctx.beginPath(); ctx.moveTo(14,y); ctx.lineTo(W-14,y); ctx.stroke();
+      ctx.drawImage(img,(W-b.w)/2,headH+4);
+      cb(cnv,{x:0,y:0,w:W,h:headH+b.h+14});
+    };
+    banner.onload=()=>compose(true);
+    banner.onerror=()=>compose(false);
+    const bEl=document.querySelector("#banner img");
+    if(bEl) banner.src=bEl.src; else compose(false);
   };
   img.onerror=()=>alert("Export failed — the diagram could not be rendered.");
   img.src="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svgStr);
@@ -1312,11 +1390,9 @@ $("btnPDF").addEventListener("click",()=>{
     const {jsPDF}=window.jspdf;
     const landscape=b.w>=b.h;
     const pdf=new jsPDF({orientation:landscape?"l":"p",unit:"pt",format:"a4"});
-    const pw=pdf.internal.pageSize.getWidth()-40, ph=pdf.internal.pageSize.getHeight()-60;
+    const pw=pdf.internal.pageSize.getWidth()-40, ph=pdf.internal.pageSize.getHeight()-40;
     const r=Math.min(pw/b.w, ph/b.h, 1);
-    pdf.setFontSize(11); pdf.setTextColor(26,86,160);
-    pdf.text("DiagramLab — "+DIAGRAMS[state.diagramType].name, 20, 24);
-    pdf.addImage(cnv.toDataURL("image/png"),"PNG",20,36,b.w*r,b.h*r);
+    pdf.addImage(cnv.toDataURL("image/png"),"PNG",20,20,b.w*r,b.h*r);
     pdf.save("diagram-"+state.diagramType+".pdf");
   });
 });
