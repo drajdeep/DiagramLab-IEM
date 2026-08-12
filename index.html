@@ -135,7 +135,7 @@ svg#canvas{display:block; background:
 <div id="deptInfo">
   <div class="d1">Department of CSE-AIML &amp; CSBS,</div>
   <div class="d2">Software Engineering | PCCCS594</div>
-  <div class="d3">Course Coordinators: Mr. Rajdeep Das (Developer), Prof. Bibekananda Kundu, Prof. Pabak Indu, Dr. Indrajit De</div>
+  <div class="d3">Course Coordinators: <b>Mr. Rajdeep Das</b> (Developer), Prof. Bibekananda Kundu, Prof. Pabak Indu, Dr. Indrajit De</div>
 </div>
 
 <header>
@@ -193,7 +193,7 @@ svg#canvas{display:block; background:
   </aside>
 </div>
 
-<footer>Developed by <b>Rajdeep Das</b>, Dept. of CSE-AIML, IEM-UEM Kolkata</footer>
+<footer>Developed by <b>Rajdeep Das</b>, Dept. of CSE-AIML, IEM-UEM Kolkata &nbsp;·&nbsp; v1.2</footer>
 
 <div id="status"></div>
 
@@ -565,13 +565,42 @@ function renderEdge(e){
       <line x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}" stroke="${col}" stroke-width="1.5"${dashed} ${marker?`marker-end="url(#${marker})"`:""}/>
       <text x="${lx}" y="${ly}" text-anchor="middle" font-size="12" font-family="Consolas, monospace" fill="#111418">${esc(label)}</text></g>`;
   }
-  const ca=center(a), cb=center(b);
-  p1=anchor(a,cb.x,cb.y); p2=anchor(b,ca.x,ca.y);
-  lx=(p1.x+p2.x)/2; ly=(p1.y+p2.y)/2-7;
   let auto=""; if(e.type==="include")auto="&#171;include&#187;"; if(e.type==="extend")auto="&#171;extend&#187;";
+
+  /* self-loop (e.g. a state transition to itself) */
+  if(a.id===b.id){
+    const sx=a.x+a.w-10, sy=a.y, r=26;
+    const path=`M${sx} ${sy} C ${sx+r+18} ${sy-r-14}, ${sx+r+30} ${sy+r}, ${a.x+a.w} ${a.y+18}`;
+    return `<g class="edge" data-id="${e.id}" style="cursor:pointer">
+      <path d="${path}" fill="none" stroke="transparent" stroke-width="12"/>
+      <path d="${path}" fill="none" stroke="${col}" stroke-width="1.5"${dashed} ${marker?`marker-end="url(#${marker})"`:""}/>
+      <text x="${sx+r+26}" y="${sy-8}" text-anchor="middle" font-size="12" font-family="Segoe UI" fill="#111418">${esc(label)}</text></g>`;
+  }
+
+  /* fan out parallel connectors between the same pair of elements */
+  const key=e.from<e.to? e.from+"|"+e.to : e.to+"|"+e.from;
+  const sibs=state.edges.filter(x=>!/msg$/.test(x.type)&&x.from!==x.to&&
+    ((x.from<x.to?x.from+"|"+x.to:x.to+"|"+x.from)===key));
+  const idx=sibs.findIndex(x=>x.id===e.id);
+  const off=(idx-(sibs.length-1)/2)*26;
+
+  const ca=center(a), cb=center(b);
+  /* perpendicular from CANONICAL pair order (not arrow direction),
+     so opposite-direction flows offset to opposite sides */
+  const kA = e.from<e.to ? a : b, kB = e.from<e.to ? b : a;
+  const cka=center(kA), ckb=center(kB);
+  const dx=ckb.x-cka.x, dy=ckb.y-cka.y, dl=Math.hypot(dx,dy)||1;
+  const px=-dy/dl, py=dx/dl;                       // unit perpendicular
+  p1=anchor(a, cb.x+px*off*2, cb.y+py*off*2);
+  p2=anchor(b, ca.x+px*off*2, ca.y+py*off*2);
+  const mx=(p1.x+p2.x)/2+px*off*2, my=(p1.y+p2.y)/2+py*off*2;   // bezier control point
+  lx=(p1.x+p2.x)/2+px*off; ly=(p1.y+p2.y)/2+py*off-7;
+  const d=off===0
+    ? `M${p1.x} ${p1.y} L${p2.x} ${p2.y}`
+    : `M${p1.x} ${p1.y} Q ${mx} ${my} ${p2.x} ${p2.y}`;
   return `<g class="edge" data-id="${e.id}" style="cursor:pointer">
-    <line x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}" stroke="transparent" stroke-width="12"/>
-    <line x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}" stroke="${col}" stroke-width="1.5"${dashed} ${marker?`marker-end="url(#${marker})"`:""}/>
+    <path d="${d}" fill="none" stroke="transparent" stroke-width="12"/>
+    <path d="${d}" fill="none" stroke="${col}" stroke-width="1.5"${dashed} ${marker?`marker-end="url(#${marker})"`:""}/>
     ${auto?`<text x="${lx}" y="${ly-13}" text-anchor="middle" font-size="11.5" font-style="italic" font-family="Segoe UI" fill="#111418">${auto}</text>`:""}
     <text x="${lx}" y="${ly}" text-anchor="middle" font-size="12" font-family="Segoe UI" fill="#111418">${esc(label)}</text></g>`;
 }
@@ -1339,8 +1368,7 @@ function contentBounds(){
 }
 const EXPORT_LINES=[
   {t:"Department of CSE-AIML & CSBS,", size:16, bold:true, color:"#123c72"},
-  {t:"Software Engineering | PCCCS594", size:14, bold:true, color:"#111418"},
-  {t:"Course Coordinators: Mr. Rajdeep Das (Developer), Prof. Bibekananda Kundu, Prof. Pabak Indu, Dr. Indrajit De", size:12, bold:false, color:"#111418"}
+  {t:"Software Engineering | PCCCS594", size:14, bold:true, color:"#111418"}
 ];
 function renderToCanvas(cb){
   const b=contentBounds(); const oldSel=sel, oldZoom=zoom;
@@ -1356,7 +1384,7 @@ function renderToCanvas(cb){
       const W=Math.max(b.w, 660);
       const bw=Math.min(600, W-20);
       const bh=hasBanner?Math.round(bw*(banner.naturalHeight/(banner.naturalWidth||1100))):0;
-      const lineH=[24,20,18], padTop=10;
+      const lineH=[24,20], padTop=10;
       let headH=padTop+(hasBanner?bh+10:0);
       EXPORT_LINES.forEach((_,i)=>headH+=lineH[i]);
       headH+=12; // gap + separator
