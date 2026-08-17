@@ -135,7 +135,7 @@ svg#canvas{display:block; background:
 <div id="deptInfo">
   <div class="d1">Department of CSE-AIML &amp; CSBS,</div>
   <div class="d2">Software Engineering | PCCCS594</div>
-  <div class="d3">Course Coordinators: Mr. Rajdeep Das, Prof. Bibekananda Kundu, Prof. Pabak Indu, Dr. Indrajit De</div>
+  <div class="d3">Course Coordinators: <b>Mr. Rajdeep Das</b> (Developer), Prof. Bibekananda Kundu, Prof. Pabak Indu, Dr. Indrajit De</div>
 </div>
 
 <header>
@@ -193,7 +193,7 @@ svg#canvas{display:block; background:
   </aside>
 </div>
 
-<footer>Developed by <b>Rajdeep Das</b>, Dept. of CSE, IEM-UEM Kolkata &nbsp;·&nbsp; v1.2</footer>
+<footer>Developed by <b>Rajdeep Das</b>, Dept. of CSE-AIML, IEM-UEM Kolkata &nbsp;·&nbsp; v1.3</footer>
 
 <div id="status"></div>
 
@@ -260,7 +260,7 @@ const DIAGRAMS={
     edges:[["inherit","Inheritance (child → parent)"],["realize","Realization (class → interface)"],
            ["assoc","Association"],["aggreg","Aggregation (part → whole)"],
            ["compos","Composition (part → whole)"],["depend","Dependency"]],
-    hint:"Attributes: one per line, e.g.  +name: String  (+ public, − private, # protected). Methods: +enroll(course: String): void"},
+    hint:"Attributes: one per line, e.g.  +name: String  (+ public, − private, # protected). Methods: +enroll(course: String): void. Select a relationship to set end multiplicities (1, 0..1, 1..*, *) — a many-side generates a collection in the code."},
   usecase:{name:"Use Case Diagram",
     nodes:[["actor","Actor"],["ucase","Use Case"],["boundary","System Boundary"],["note","Note"]],
     edges:[["assoc","Association"],["include","«include» (base → included)"],
@@ -271,9 +271,9 @@ const DIAGRAMS={
     edges:[["dataflow","Data Flow"]],
     hint:"Yourdon/DeMarco: circle processes, data stores as two parallel lines. Gane & Sarson: rounded-corner processes with ID band, open-ended data stores. Pick the notation above — label every data flow."},
   sequence:{name:"Sequence Diagram",
-    nodes:[["lifeline","Object Lifeline"],["actorline","Actor Lifeline"],["activation","Activation Bar"],["note","Note"]],
+    nodes:[["lifeline","Object Lifeline"],["actorline","Actor Lifeline"],["activation","Activation Bar"],["destroyx","Destruction (X)"],["note","Note"]],
     edges:[["syncmsg","Synchronous Message"],["asyncmsg","Asynchronous Message"],["retmsg","Return Message"]],
-    hint:"Add lifelines left-to-right. Drop an Activation Bar onto a lifeline to show when the object is active (it snaps to the nearest lifeline). Pick a message, click the source lifeline at the height you want, then the target lifeline. Messages named like  method(args)  are used in code generation."},
+    hint:"Add lifelines left-to-right. Drop an Activation Bar onto a lifeline to show when the object is active, and a Destruction (X) marker at the point where an object is destroyed — both snap to the nearest lifeline. Pick a message, click the source lifeline at the height you want, then the target lifeline. Messages named like  method(args)  drive code generation."},
   activity:{name:"Activity Diagram",
     nodes:[["initial","Initial Node"],["afinal","Final Node"],["action","Action"],["decision","Decision"],["forkbar","Fork / Join Bar"],["note","Note"]],
     edges:[["flow","Control Flow"]],
@@ -308,6 +308,7 @@ function palIcon(t){
     case"external":return s+`<rect x="5" y="4" width="24" height="16" ${k}/></svg>`;
     case"lifeline":return s+`<rect x="8" y="2" width="18" height="8" ${k}/><line x1="17" y1="10" x2="17" y2="23" ${k} stroke-dasharray="3,2"/></svg>`;
     case"activation":return s+`<line x1="17" y1="2" x2="17" y2="22" ${k} stroke-dasharray="3,2"/><rect x="13" y="6" width="8" height="13" ${k} fill="#e8f0fa"/></svg>`;
+    case"destroyx":return s+`<line x1="9" y1="4" x2="25" y2="20" ${k} stroke-width="2"/><line x1="25" y1="4" x2="9" y2="20" ${k} stroke-width="2"/></svg>`;
     case"initial":case"sinitial":return s+`<circle cx="17" cy="12" r="6" ${f}/></svg>`;
     case"afinal":case"sfinal":return s+`<circle cx="17" cy="12" r="8" ${k}/><circle cx="17" cy="12" r="4" ${f}/></svg>`;
     case"action":case"stnode":return s+`<rect x="4" y="5" width="26" height="14" rx="6" ${k}/></svg>`;
@@ -349,6 +350,7 @@ function makeNode(type,x,y){
     case"external": n.label="External Entity"; n.w=150; n.h=60; break;
     case"lifeline": n.label="obj: Class"; n.w=120; n.h=460; break;
     case"activation": n.label=""; n.w=14; n.h=110; break;
+    case"destroyx": n.label=""; n.w=26; n.h=26; break;
     case"initial": case"sinitial": n.label=""; n.w=30; n.h=30; break;
     case"afinal": case"sfinal": n.label=""; n.w=34; n.h=34; break;
     case"action": n.label="Action"; n.w=140; n.h=54; break;
@@ -493,6 +495,11 @@ function renderNode(n){
   else if(T==="activation"){
     g+=`<rect x="${n.x}" y="${n.y}" width="${n.w}" height="${n.h}" fill="#e8f0fa" stroke="${selCls?'#1a56a0':'#111418'}" stroke-width="1.4"/>`;
   }
+  else if(T==="destroyx"){
+    const sc2=selCls?'#1a56a0':'#111418';
+    g+=`<line x1="${n.x}" y1="${n.y}" x2="${n.x+n.w}" y2="${n.y+n.h}" stroke="${sc2}" stroke-width="2.4"/>`;
+    g+=`<line x1="${n.x+n.w}" y1="${n.y}" x2="${n.x}" y2="${n.y+n.h}" stroke="${sc2}" stroke-width="2.4"/>`;
+  }
   else if(T==="initial"||T==="sinitial"){
     g+=`<circle cx="${c.x}" cy="${c.y}" r="12" fill="#111418" stroke="${selCls?'#1a56a0':'none'}" stroke-width="3"/>`;
   }
@@ -528,7 +535,7 @@ function renderNode(n){
     g+=multiline(n.label,n.x+8,n.y+20,15,'');
   }
   // resize handle
-  if(selCls && !["initial","sinitial","afinal","sfinal"].includes(T))
+  if(selCls && !["initial","sinitial","afinal","sfinal","destroyx"].includes(T))
     g+=`<rect class="rz" data-id="${n.id}" x="${n.x+n.w-7}" y="${n.y+n.h-7}" width="10" height="10" fill="#1a56a0" style="cursor:nwse-resize"/>`;
   return g+"</g>";
 }
@@ -598,11 +605,15 @@ function renderEdge(e){
   const d=off===0
     ? `M${p1.x} ${p1.y} L${p2.x} ${p2.y}`
     : `M${p1.x} ${p1.y} Q ${mx} ${my} ${p2.x} ${p2.y}`;
+  const mlab=(pt,ot,txt)=>{ if(!txt)return "";
+    const ux=ot.x-pt.x, uy=ot.y-pt.y, ul=Math.hypot(ux,uy)||1;
+    return `<text x="${pt.x+ux/ul*18+px*13}" y="${pt.y+uy/ul*18+py*13+4}" text-anchor="middle" font-size="11.5" font-family="Segoe UI" fill="#111418">${esc(txt)}</text>`; };
   return `<g class="edge" data-id="${e.id}" style="cursor:pointer">
     <path d="${d}" fill="none" stroke="transparent" stroke-width="12"/>
     <path d="${d}" fill="none" stroke="${col}" stroke-width="1.5"${dashed} ${marker?`marker-end="url(#${marker})"`:""}/>
     ${auto?`<text x="${lx}" y="${ly-13}" text-anchor="middle" font-size="11.5" font-style="italic" font-family="Segoe UI" fill="#111418">${auto}</text>`:""}
-    <text x="${lx}" y="${ly}" text-anchor="middle" font-size="12" font-family="Segoe UI" fill="#111418">${esc(label)}</text></g>`;
+    <text x="${lx}" y="${ly}" text-anchor="middle" font-size="12" font-family="Segoe UI" fill="#111418">${esc(label)}</text>
+    ${mlab(p1,p2,e.m1)}${mlab(p2,p1,e.m2)}</g>`;
 }
 </script>
 <script>
@@ -655,6 +666,7 @@ function snapActivation(n){
   if(best && bd<120){ n.x=Math.round(center(best).x)-n.w/2;
     n.y=Math.max(best.y+40, Math.min(n.y, best.y+best.h-n.h)); }
 }
+const snapsToLifeline=t=>t==="activation"||t==="destroyx";
 
 /* drop from palette */
 $("canvasWrap").addEventListener("dragover",ev=>ev.preventDefault());
@@ -664,7 +676,7 @@ $("canvasWrap").addEventListener("drop",ev=>{
     const d=JSON.parse(ev.dataTransfer.getData("text/plain"));
     if(d.kind==="node"){ const p=svgPoint(ev); pushUndo();
       const n=makeNode(d.type,p.x-60,p.y-30);
-      if(n.type==="activation"){n.x=p.x-7; snapActivation(n);}
+      if(snapsToLifeline(n.type)){n.x=p.x-n.w/2; snapActivation(n);}
       state.nodes.push(n);
       sel={kind:"node",id:n.id}; render(); showProps(); }
     else { clearPalActive();
@@ -706,7 +718,7 @@ $("canvas").addEventListener("mousedown",ev=>{
   if(pending && pending.kind==="node"){
     pushUndo();
     const n=makeNode(pending.type,p.x-60,p.y-30);
-    if(n.type==="activation"){n.x=p.x-7; snapActivation(n);}
+    if(snapsToLifeline(n.type)){n.x=p.x-n.w/2; snapActivation(n);}
     state.nodes.push(n);
     sel={kind:"node",id:n.id}; pending=null; clearPalActive();
     $("canvasWrap").classList.remove("connecting");
@@ -731,11 +743,17 @@ window.addEventListener("mousemove",ev=>{
   const n=state.nodes.find(x=>x.id===drag.id); if(!n)return;
   if(drag.mode==="move"){
     n.x=Math.round((p.x-drag.dx)/10)*10; n.y=Math.round((p.y-drag.dy)/10)*10;
-    if(n.type==="activation") snapActivation(n);
+    if(snapsToLifeline(n.type)) snapActivation(n);
     (drag.members||[]).forEach(m=>{const mn=state.nodes.find(x=>x.id===m.id); if(mn){mn.x=n.x+m.ox; mn.y=n.y+m.oy;}});
   }else{
-    n.w=Math.max(30, Math.round((p.x-n.x)/10)*10);
-    n.h=Math.max(20, Math.round((p.y-n.y)/10)*10);
+    if(n.type==="activation"){                 /* activation bars resize in height only */
+      n.h=Math.max(30, Math.round((p.y-n.y)/10)*10);
+    }else if(n.type==="forkbar"){              /* fork/join bars resize in width only */
+      n.w=Math.max(60, Math.round((p.x-n.x)/10)*10);
+    }else{
+      n.w=Math.max(30, Math.round((p.x-n.x)/10)*10);
+      n.h=Math.max(20, Math.round((p.y-n.y)/10)*10);
+    }
   }
   render();
 });
@@ -754,12 +772,36 @@ $("canvas").addEventListener("dblclick",ev=>{
 });
 
 /* keyboard */
+let clipNode=null;
+function duplicateSelected(){
+  if(!(sel&&sel.kind==="node"))return;
+  const src=state.nodes.find(n=>n.id===sel.id); if(!src)return;
+  pushUndo();
+  const n=JSON.parse(JSON.stringify(src)); n.id=uid(); n.x+=24; n.y+=24;
+  state.nodes.push(n); sel={kind:"node",id:n.id}; render(); showProps();
+  toast("Element duplicated.");
+}
 window.addEventListener("keydown",ev=>{
+  const inField=/INPUT|TEXTAREA/.test(document.activeElement.tagName);
   if(ev.key==="Escape"){ pending=null; connectSrc=null; clearPalActive();
     $("canvasWrap").classList.remove("connecting"); return; }
-  if((ev.ctrlKey||ev.metaKey)&&ev.key.toLowerCase()==="z"){ ev.preventDefault(); undo(); return; }
-  if((ev.key==="Delete"||ev.key==="Backspace") && sel &&
-     !/INPUT|TEXTAREA/.test(document.activeElement.tagName)){
+  if((ev.ctrlKey||ev.metaKey)&&ev.key.toLowerCase()==="z"){ if(!inField){ev.preventDefault(); undo();} return; }
+  if((ev.ctrlKey||ev.metaKey)&&ev.key.toLowerCase()==="c" && !inField && sel&&sel.kind==="node"){
+    const src=state.nodes.find(n=>n.id===sel.id);
+    if(src){ clipNode=JSON.stringify(src); toast("Element copied — press Ctrl+V to paste."); }
+    return;
+  }
+  if((ev.ctrlKey||ev.metaKey)&&ev.key.toLowerCase()==="v" && !inField && clipNode){
+    ev.preventDefault(); pushUndo();
+    const n=JSON.parse(clipNode); n.id=uid(); n.x+=24; n.y+=24;
+    clipNode=JSON.stringify(n);           /* successive pastes cascade */
+    state.nodes.push(n); sel={kind:"node",id:n.id}; render(); showProps();
+    return;
+  }
+  if((ev.ctrlKey||ev.metaKey)&&ev.key.toLowerCase()==="d" && !inField && sel&&sel.kind==="node"){
+    ev.preventDefault(); duplicateSelected(); return;
+  }
+  if((ev.key==="Delete"||ev.key==="Backspace") && sel && !inField){
     ev.preventDefault(); deleteSelected();
   }
 });
@@ -784,7 +826,8 @@ function showProps(){
           <label>Methods (one per line)</label><textarea id="pMeths">${esc(n.methods||"")}</textarea>
           <div class="note">Format: <b>+op(param: Type): ReturnType</b></div>`;
     }
-    h+=`<div class="row"><button class="danger" onclick="deleteSelected()">Delete element</button></div>`;
+    h+=`<div class="row"><button class="tb-btn" onclick="duplicateSelected()">Duplicate (Ctrl+D)</button><button class="danger" onclick="deleteSelected()">Delete</button></div>
+        <div class="note">Ctrl+C copies the selected element, Ctrl+V pastes a clone.</div>`;
     body.innerHTML=h;
     $("pLabel").addEventListener("input",e=>{n.label=e.target.value; render();});
     if($("pAttrs")) $("pAttrs").addEventListener("input",e=>{n.attrs=e.target.value; render();});
@@ -794,11 +837,18 @@ function showProps(){
     const tname=(DIAGRAMS[state.diagramType].edges.find(x=>x[0]===e.type)||[,""])[1]||e.type;
     let h=`<div class="note"><b>Connector:</b> ${esc(tname)}</div>
        <label>Label</label><input type="text" id="pELabel" value="${esc(e.label||"")}">`;
+    if(["assoc","aggreg","compos","depend"].includes(e.type)&&state.diagramType==="class"){
+      h+=`<label>Multiplicity — source end</label><input type="text" id="pM1" value="${esc(e.m1||"")}" placeholder="e.g. 1">
+          <label>Multiplicity — target end</label><input type="text" id="pM2" value="${esc(e.m2||"")}" placeholder="e.g. 1..* or 0..*">
+          <div class="note">A many-side (<b>*</b> or <b>1..*</b>) generates a collection field (List / std::vector / list) in the code.</div>`;
+    }
     if(e.type==="trans") h+=`<div class="note">Use the pattern <b>event [guard] / action</b> — the event name drives code generation.</div>`;
     if(/msg$/.test(e.type)) h+=`<div class="note">Name messages like <b>method(args)</b> for clean code generation.</div>`;
     h+=`<div class="row"><button class="danger" onclick="deleteSelected()">Delete connector</button></div>`;
     body.innerHTML=h;
     $("pELabel").addEventListener("input",ev=>{e.label=ev.target.value; render();});
+    if($("pM1")) $("pM1").addEventListener("input",ev=>{e.m1=ev.target.value; render();});
+    if($("pM2")) $("pM2").addEventListener("input",ev=>{e.m2=ev.target.value; render();});
   }
 }
 
@@ -893,6 +943,12 @@ const DEFVAL={java:t=>/int|long|float|double|char/.test(t)?"0":(t==="boolean"?"f
               cpp:t=>/int|long|float|double|char/.test(t)?"0":(t==="bool"?"false":"{}"),
               python:()=> "None"};
 
+const isMany=s=>/\*|\.\./.test(String(s||""));
+const RESERVED={
+  java:new Set(["case","class","new","int","float","double","char","byte","void","for","if","else","switch","do","while","return","this","super","package","import","enum","default","public","private","protected","static","final","boolean","long","short","try","catch","interface","abstract","extends","implements"]),
+  cpp:new Set(["case","class","new","int","float","double","char","void","for","if","else","switch","do","while","return","this","enum","default","public","private","protected","static","try","catch","struct","union","template","typename","namespace","using","delete","operator","virtual","const","auto","bool","long","short"]),
+  python:new Set(["case","class","def","return","pass","for","if","else","elif","while","import","from","try","except","finally","with","as","lambda","None","True","False","and","or","not","in","is","del","global","raise","yield","assert","break","continue"])
+};
 function classModel(){
   const classes=state.nodes.filter(n=>["class","abstract","interface"].includes(n.type)).map(n=>({
     id:n.id, name:ident(n.label), kind:n.type,
@@ -905,8 +961,14 @@ function classModel(){
     const a=byId[e.from], b=byId[e.to]; if(!a||!b)return;
     if(e.type==="inherit") a.parent=b.name;
     else if(e.type==="realize") a.impls.push(b.name);
-    else if(e.type==="assoc"||e.type==="depend") a.members.push({name:lcFirst(b.name), type:b.name, rel:e.type});
-    else if(e.type==="aggreg"||e.type==="compos") b.members.push({name:lcFirst(a.name), type:a.name, rel:e.type}); // whole holds part
+    else if(e.type==="assoc"||e.type==="depend") a.members.push({name:lcFirst(b.name), type:b.name, rel:e.type, many:isMany(e.m2)});
+    else if(e.type==="aggreg"||e.type==="compos") b.members.push({name:lcFirst(a.name), type:a.name, rel:e.type, many:isMany(e.m1)}); // whole holds part
+  });
+  /* dedupe: skip relationship members whose name is already a typed attribute, and duplicates */
+  classes.forEach(cl=>{
+    const seen=new Set(cl.attrs.map(a=>a.name.toLowerCase()));
+    cl.members=cl.members.filter(m=>{const k=m.name.toLowerCase();
+      if(seen.has(k)) return false; seen.add(k); return true;});
   });
   return classes;
 }
@@ -915,10 +977,11 @@ function genClass(lang){
   const cls=classModel();
   if(!cls.length) return "// No classes on the canvas. Add Class / Interface elements first.";
   const L=[]; const map=T2[lang];
+  const safe=n=>RESERVED[lang].has(n)? n+"Ref" : n;
   const banner=lang==="python"?"# ":"// ";
   L.push(banner+"Generated by DiagramLab — rule-based Class Diagram → "+({java:"Java",cpp:"C++",python:"Python"})[lang]);
   L.push("");
-  if(lang==="cpp"){L.push("#include <string>");L.push("");}
+  if(lang==="cpp"){L.push("#include <string>");L.push("#include <vector>");L.push("");}
   cls.forEach(c=>{
     const inh=[c.parent,...c.impls].filter(Boolean);
     if(lang==="java"){
@@ -927,8 +990,12 @@ function genClass(lang){
       if(c.kind==="interface"&&c.parent) head+=" extends "+c.parent;
       if(c.impls.length&&c.kind!=="interface") head+=" implements "+c.impls.join(", ");
       L.push(head+" {");
-      c.attrs.forEach(a=>L.push(`    ${a.vis} ${map(a.type)} ${a.name};`));
-      c.members.forEach(m=>L.push(`    private ${m.type} ${m.name}; // ${m.rel==="compos"?"composition":m.rel==="aggreg"?"aggregation":"association"}`));
+      c.attrs.forEach(a=>L.push(`    ${a.vis} ${map(a.type)} ${safe(a.name)};`));
+      c.members.forEach(m=>{
+        const rel=m.rel==="compos"?"composition":m.rel==="aggreg"?"aggregation":"association";
+        if(m.many) L.push(`    private java.util.List<${m.type}> ${safe(m.name)}List = new java.util.ArrayList<>(); // ${rel} 1..*`);
+        else L.push(`    private ${m.type} ${safe(m.name)}; // ${rel}`);
+      });
       if(c.attrs.length||c.members.length)L.push("");
       c.ops.forEach(o=>{
         const ps=o.params.map(p=>map(p.type)+" "+p.name).join(", ");
@@ -945,8 +1012,11 @@ function genClass(lang){
       if(inh.length) head+=" : "+inh.map(p=>"public "+p).join(", ");
       L.push(head+" {");
       const grp={public:[],protected:[],private:[]};
-      c.attrs.forEach(a=>grp[a.vis].push(`${map(a.type)} ${a.name};`));
-      c.members.forEach(m=>grp.private.push(`${m.type}${m.rel==="assoc"||m.rel==="aggreg"?"*":""} ${m.name}; // ${m.rel}`));
+      c.attrs.forEach(a=>grp[a.vis].push(`${map(a.type)} ${safe(a.name)};`));
+      c.members.forEach(m=>{
+        if(m.many) grp.private.push(`std::vector<${m.type}*> ${safe(m.name)}s; // ${m.rel} 1..*`);
+        else grp.private.push(`${m.type}${m.rel==="assoc"||m.rel==="aggreg"?"*":""} ${safe(m.name)}; // ${m.rel}`);
+      });
       c.ops.forEach(o=>{
         const ps=o.params.map(p=>map(p.type)+" "+p.name).join(", ");
         const pure=c.kind==="interface"?" = 0":"";
@@ -966,8 +1036,10 @@ function genClass(lang){
       if(c.kind==="interface") L.push('    """Interface — implement all methods in subclasses."""');
       if(c.attrs.length||c.members.length){
         L.push("    def __init__(self):");
-        c.attrs.forEach(a=>L.push(`        self.${a.vis==="private"?"_":""}${a.name}: ${map(a.type)} = ${DEFVAL.python()}`));
-        c.members.forEach(m=>L.push(`        self.${m.name} = None  # ${m.rel} -> ${m.type}`));
+        c.attrs.forEach(a=>L.push(`        self.${a.vis==="private"?"_":""}${safe(a.name)}: ${map(a.type)} = ${DEFVAL.python()}`));
+        c.members.forEach(m=>L.push(m.many
+          ? `        self.${safe(m.name)}_list = []  # ${m.rel} 1..* -> ${m.type}`
+          : `        self.${safe(m.name)} = None  # ${m.rel} -> ${m.type}`));
       }
       c.ops.forEach(o=>{
         const ps=["self",...o.params.map(p=>`${p.name}: ${map(p.type)}`)].join(", ");
@@ -1267,12 +1339,12 @@ function parseJava(src){
     const impls=m[4]?m[4].split(",").map(s=>s.trim().split(".").pop()):[];
     const body=extractBody(src,re.lastIndex-1);
     const attrs=[],ops=[];
-    body.replace(/(public|private|protected)?\s*(?:static\s+|final\s+)*([\w<>\[\]]+)\s+(\w+)\s*\(([^)]*)\)/g,(_,v,ret,nm,ps)=>{
+    body.replace(/(public|private|protected)?\s*(?:static\s+|final\s+)*([\w.<>\[\],]+)\s+(\w+)\s*\(([^)]*)\)/g,(_,v,ret,nm,ps)=>{
       if(ret==="new"||nm===name&&ret===undefined)return"";
       ops.push(visSym(v)+nm+"("+ps.split(",").map(p=>{const t=p.trim().split(/\s+/);return t.length>1?t[1]+": "+t[0]:p.trim();}).filter(Boolean).join(", ")+"): "+ret);
       return"";
     });
-    body.replace(/(public|private|protected)\s+(?:static\s+|final\s+)*([\w<>\[\]]+)\s+(\w+)\s*(?:=[^;]+)?;/g,(_,v,t,nm)=>{
+    body.replace(/(public|private|protected)\s+(?:static\s+|final\s+)*([\w.<>\[\],]+)\s+(\w+)\s*(?:=[^;]+)?;/g,(_,v,t,nm)=>{
       attrs.push(visSym(v)+nm+": "+t); return"";
     });
     out.push({name,kind:kind==="interface"?"interface":(/abstract\s+class\s+/.test(m[0])?"abstract":"class"),parent,impls,attrs,ops});
@@ -1342,8 +1414,28 @@ $("btnRevGo").addEventListener("click",()=>{
     const n=makeNode(c.kind==="interface"?"interface":c.kind==="abstract"?"abstract":"class",
       60+(i%perRow)*(W+GX), 60+Math.floor(i/perRow)*(180+GY));
     n.label=c.name; n.w=W;
-    n.attrs=c.attrs.join("\n"); n.methods=c.ops.join("\n");
+    n.attrs=[...new Set(c.attrs)].join("\n"); n.methods=[...new Set(c.ops)].join("\n");
     n._src=c; state.nodes.push(n);
+  });
+  /* convert typed fields that reference another parsed class into association edges */
+  state.nodes.forEach(n=>{
+    const kept=[];
+    (n.attrs||"").split("\n").forEach(line=>{
+      const m=line.match(/^[-+#]?\s*([\w]+)\s*:\s*(.+)$/);
+      let target=null, many=false;
+      if(m){
+        let t=m[2].trim();
+        const gm=t.match(/(?:List|ArrayList|Set|Collection|vector|std::vector)\s*<\s*([\w_]+)\s*\*?\s*>/);
+        if(gm){ t=gm[1]; many=true; }
+        t=t.replace(/[\[\]*&]/g,"").replace(/^std::/,"").trim();
+        target=state.nodes.find(x=>x.id!==n.id && x.label===t);
+      }
+      if(target){
+        if(!state.edges.some(e=>e.type==="assoc"&&e.from===n.id&&e.to===target.id))
+          state.edges.push({id:uid(),type:"assoc",from:n.id,to:target.id,label:"",m1:"1",m2:many?"1..*":"1"});
+      } else kept.push(line);
+    });
+    n.attrs=kept.join("\n");
   });
   parsed.forEach((c,i)=>{
     const child=state.nodes[i];
